@@ -6,125 +6,143 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.event.MouseListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class DrawGrid {
-    private JFrame frame;
-
-    public DrawGrid() {
-        frame = new JFrame("DrawGrid");
-        frame.setSize(310, 400);
+public class Connect4 {
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Connect4");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setPreferredSize(frame.getSize());
-        frame.add(new MultiDraw(frame.getSize()));
+        frame.add(new Connect4Panel());
         frame.pack();
         frame.setVisible(true);
     }
+}
 
-    public static void main(String[] argv) {
-        new DrawGrid();
+class Connect4Panel extends JPanel {
+    private static final int CELL_WIDTH = 40;
+    private static final int ROWS = 6;
+    private static final int COLS = 7;
+
+    private Color[][] grid = new Color[ROWS][COLS];
+    private int currentPlayer = 1;
+
+    public Connect4Panel() {
+        setPreferredSize(new Dimension(COLS * CELL_WIDTH, ROWS * CELL_WIDTH));
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int x = e.getX();
+                int col = x / CELL_WIDTH;
+                int row = getRowForColumn(col);
+
+                if (row == -1) {
+                    System.out.println("Invalid move");
+                    return;
+                }
+
+                grid[row][col] = currentPlayer == 1 ? Color.RED : Color.YELLOW;
+                currentPlayer = 3 - currentPlayer; // alternate between player 1 and 2
+                repaint();
+            }
+        });
+
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
+                grid[row][col] = Color.WHITE;
+            }
+        }
     }
 
-    public static class MultiDraw extends JPanel  implements MouseListener {
-        int startX = 10;
-        int startY = 10;
-        int cellWidth = 40; //Coin
-        int turn = 2; //players
-        int rows = 6;//rows 
-        int cols = 7;//columns
+    private int getRowForColumn(int col) {
+        for (int row = ROWS - 1; row >= 0; row--) {
+            if (grid[row][col] == Color.WHITE) {
+                return row;
+            }
+        }
+        return -1;
+    }
 
-        Color[][] grid = new Color[rows][cols];
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g;
 
-        public MultiDraw(Dimension dimension) {
-            setSize(dimension);
-            setPreferredSize(dimension);
-            addMouseListener(this);
-            //1. initialize array here
-            int x = 0;
-            for (int row = 0; row < grid.length; row++) {
-                for (int col = 0; col < grid[0].length; col++) {
-                   grid[row][col]= new Color(255,255,255);
+        // Draw the grid
+        g2.setColor(Color.BLUE);
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
+                int x = col * CELL_SIZE + BORDER_SIZE;
+                int y = row * CELL_SIZE + BORDER_SIZE;
+                g2.drawRect(x, y, CELL_SIZE, CELL_SIZE);
+                if (grid[row][col] == 1) {
+                    g2.setColor(Color.RED);
+                    g2.fillOval(x, y, CELL_SIZE, CELL_SIZE);
+                }
+                else if (grid[row][col] == 2) {
+                    g2.setColor(Color.YELLOW);
+                    g2.fillOval(x, y, CELL_SIZE, CELL_SIZE);
                 }
             }
         }
+        // Display current player's turn
+        g2.setColor(Color.BLACK);
+        g2.drawString("Current player: " + (currentPlayer == 1 ? "Red" : "Yellow"), BORDER_SIZE, getHeight() - BORDER_SIZE);
 
+    }
+
+    /**
+     * Handles mouse clicks on the game board.
+     */
+    private class MouseHandler extends MouseAdapter {
         @Override
-        public void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D)g;
-            Dimension d = getSize();
-            g2.setColor(new Color(0, 200, 200));
-            g2.fillRect(0,0,d.width,d.height);
-            g2.setColor(new Color(0, 0, 200));
-            // g2.fillRect(60,60,d.width,d.height);
-            startX = 0;
-            startY = 0;
-
-            //2) draw grid here
-            for (int row = 0; row < grid.length; row++) {
-                for (int col = 0; col < grid[0].length; col++) {
-                    g2.setColor(grid[row][col]);
-                    g2.fillOval(startX, startY, cellWidth, cellWidth);
-                    startX+=cellWidth;
-                }
-                startX=0;
-                startY+=cellWidth;
-
-                
+        public void mouseClicked(MouseEvent e) {
+            int col = (e.getX() - BORDER_SIZE) / CELL_SIZE;
+            if (col < 0 || col >= COLS) {
+                return; // clicked outside of game board
             }
-
-            g2.setColor(new Color(255, 255, 255));
-           if(turn%2==0){
-            g2.drawString("Red's Turn", 20, 350);
-           }else{
-                g2.drawString("Yellow's Turn",20,350);
-           }
-
-        }
-
-        public void mousePressed(MouseEvent e) {
-
-            int x = e.getX();
-            int y = e.getY();
-            int Xspot= x/cellWidth;
-            int Yspot = y/cellWidth;
-            Yspot= Test(Xspot);
-            if(Yspot<0){
-       System.out.println("Not a Valid Entry");
+            int row = getLowestEmptyRow(col);
+            if (row < 0) {
+                return; // column is full
             }
-            else{
-            if (turn%2==0){
-                grid[Yspot][Xspot]= new Color(255,0,0);
-            }
-            else{
-                grid[Yspot][Xspot]= new Color(255,255,0);
-            }
-            turn++;
-        }
+            grid[row][col] = currentPlayer;
+            currentPlayer = 3 - currentPlayer; // switch player (1 -> 2, 2 -> 1)
             repaint();
         }
-        public int Test(int Xspot){
-            int yspot = rows-1;
-            while(!(grid[yspot][Xspot].equals(new Color(255,255,255))|| yspot<0)){
-                yspot--;
+
+        /**
+         * Finds the lowest empty row in the specified column.
+         * Returns -1 if the column is already full.
+         */
+        private int getLowestEmptyRow(int col) {
+            for (int row = ROWS - 1; row >= 0; row--) {
+                if (grid[row][col] == 0) {
+                    return row;
+                }
             }
-            return yspot;
+            return -1; // column is full
         }
+    }
 
-        public void mouseReleased(MouseEvent e) {
+    /**
+     * Starts a new game of Connect Four.
+     */
+    public void newGame() {
+        grid = new int[ROWS][COLS];
+        currentPlayer = 1;
+        repaint();
+    }
 
-        }
-
-        public void mouseEntered(MouseEvent e) {
-
-        }
-
-        public void mouseExited(MouseEvent e) {
-
-        }
-
-        public void mouseClicked(MouseEvent e) {
-
-        }
+    /**
+     * Launches a new Connect Four game window.
+     */
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Connect Four");
+        ConnectFour game = new ConnectFour();
+        frame.add(game);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
+        game.newGame();
     }
 }
