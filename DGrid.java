@@ -8,6 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
+import javax.swing.JOptionPane;
 
 public class DrawGrid {
     private JFrame frame;
@@ -31,7 +32,7 @@ public class DrawGrid {
         int startY = 10;
         int cellWidth = 40; //Coin
         int turn = 2; //players
-        int rows = 6;//rows 
+        int rows = 6;//rows
         int cols = 7;//columns
 
         Color[][] grid = new Color[rows][cols];
@@ -44,7 +45,7 @@ public class DrawGrid {
             int x = 0;
             for (int row = 0; row < grid.length; row++) {
                 for (int col = 0; col < grid[0].length; col++) {
-                   grid[row][col]= new Color(255,255,255);
+                    grid[row][col]= new Color(255,255,255);
                 }
             }
         }
@@ -70,16 +71,15 @@ public class DrawGrid {
                 startX=0;
                 startY+=cellWidth;
 
-                
+
             }
 
             g2.setColor(new Color(255, 255, 255));
-           if(turn%2==0){
-            g2.drawString("Red's Turn", 20, 350);
-           }else{
+            if(turn%2==0){
+                g2.drawString("Red's Turn", 20, 350);
+            }else{
                 g2.drawString("Yellow's Turn",20,350);
-           }
-
+            }
         }
 
         public void mousePressed(MouseEvent e) {
@@ -90,17 +90,26 @@ public class DrawGrid {
             int Yspot = y/cellWidth;
             Yspot= Test(Xspot);
             if(Yspot<0){
-       System.out.println("Not a Valid Entry");
+                System.out.println("Not a Valid Entry");
             }
             else{
-            if (turn%2==0){
-                grid[Yspot][Xspot]= new Color(255,0,0);
+                if (turn%2==0){
+                    grid[Yspot][Xspot]= new Color(255,0,0);
+                }
+                else{
+                    grid[Yspot][Xspot]= new Color(255,255,0);
+                }
+                turn++;
+                if (checkWinner()) {
+                    if (turn % 2 == 0) {
+                        JOptionPane.showMessageDialog(this, "Red Wins!");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Yellow Wins!");
+                    }
+                    System.exit(0);
+                }
+
             }
-            else{
-                grid[Yspot][Xspot]= new Color(255,255,0);
-            }
-            turn++;
-        }
             repaint();
         }
         public int Test(int Xspot){
@@ -110,6 +119,59 @@ public class DrawGrid {
             }
             return yspot;
         }
+
+        public boolean checkWinner() {
+            // check horizontal
+            for (int row = 0; row < grid.length; row++) {
+                for (int col = 0; col < grid[0].length - 3; col++) {
+                    if (grid[row][col].equals(grid[row][col + 1]) &&
+                            grid[row][col].equals(grid[row][col + 2]) &&
+                            grid[row][col].equals(grid[row][col + 3]) &&
+                            !grid[row][col].equals(new Color(255, 255, 255))) {
+                        return true;
+                    }
+                }
+            }
+
+            // check vertical
+            for (int col = 0; col < grid[0].length; col++) {
+                for (int row = 0; row < grid.length - 3; row++) {
+                    if (grid[row][col].equals(grid[row + 1][col]) &&
+                            grid[row][col].equals(grid[row + 2][col]) &&
+                            grid[row][col].equals(grid[row + 3][col]) &&
+                            !grid[row][col].equals(new Color(255, 255, 255))) {
+                        return true;
+                    }
+                }
+            }
+
+            // check diagonal (top-left to bottom-right)
+            for (int row = 0; row < grid.length - 3; row++) {
+                for (int col = 0; col < grid[0].length - 3; col++) {
+                    if (grid[row][col].equals(grid[row + 1][col + 1]) &&
+                            grid[row][col].equals(grid[row + 2][col + 2]) &&
+                            grid[row][col].equals(grid[row + 3][col + 3]) &&
+                            !grid[row][col].equals(new Color(255, 255, 255))) {
+                        return true;
+                    }
+                }
+            }
+
+            // check diagonal (bottom-left to top-right)
+            for (int row = grid.length - 1; row >= 3; row--) {
+                for (int col = 0; col < grid[0].length - 3; col++) {
+                    if (grid[row][col].equals(grid[row - 1][col + 1]) &&
+                            grid[row][col].equals(grid[row - 2][col + 2]) &&
+                            grid[row][col].equals(grid[row - 3][col + 3]) &&
+                            !grid[row][col].equals(new Color(255, 255, 255))) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
 
         public void mouseReleased(MouseEvent e) {
 
